@@ -19,6 +19,9 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Check if cache hit
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "cache hit, skip install"
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Build
