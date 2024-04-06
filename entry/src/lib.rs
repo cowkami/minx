@@ -1,4 +1,5 @@
 use anyhow::{ensure, Context, Result};
+use async_trait::async_trait;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -66,10 +67,22 @@ impl Into<String> for EntryBody {
     }
 }
 
+#[async_trait]
+pub trait EntryRepository {
+    async fn save(&self, entry: Entry) -> Result<()>;
+    async fn get_by_ids(&self, id: &[EntryId]) -> Result<Vec<Entry>>;
+}
+
+pub trait ProvideEntryRepository {
+    type Repository: EntryRepository;
+
+    fn provide(&self) -> &Self::Repository;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
+    use rstest::*;
 
     #[rstest]
     fn test_entry_body_new() {

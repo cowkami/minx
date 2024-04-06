@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.81"
-
+async-trait = "0.1.79"
 uuid = { version = "1.8.0", features = ["v4"] }
 
 [dev-dependencies]
