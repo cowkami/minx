@@ -1,0 +1,39 @@
+name: entry-server CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          workload_identity_provider: "projects/329382624121/locations/global/workloadIdentityPools/github-actions-pool/providers/github"
+          service_account: "github-actions@minx-prod.iam.gserviceaccount.com"
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+      - name: Configure Docker
+        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+      - name: "Build and push Docker image"
+        run: |
+          cd entry-server
+          docker build -t asia-northeast1-docker.pkg.dev/minx-prod/entry-server/base:latest .
+          docker push asia-northeast1-docker.pkg.dev/minx-prod/entry-server/base:latest
+      - name: "Deploy to Cloud Run"
+        run: |
+          gcloud run deploy entry-server \
+            --image asia-northeast1-docker.pkg.dev/minx-prod/entry-server/base:latest \
+            --platform managed \
+            --region asia-northeast1 \
+            --allow-unauthenticated
