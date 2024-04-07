@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+env:
+  PROJECT_ID: minx-prod
+  PROJECT_NUMBER: 329382624121
+  REGION: asia-northeast1
+  APP_NAME: entry-server
+
 jobs:
   deploy:
     name: Build and Deploy
@@ -19,21 +25,21 @@ jobs:
         name: "Authenticate to Google Cloud"
         uses: "google-github-actions/auth@v2"
         with:
-          workload_identity_provider: "projects/329382624121/locations/global/workloadIdentityPools/github-actions-pool/providers/github"
-          service_account: "github-actions@minx-prod.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github"
+          service_account: "github-actions@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v1"
       - name: Configure Docker
-        run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+        run: gcloud auth configure-docker ${REGION}-docker.pkg.dev
       - name: "Build and push Docker image"
         run: |
-          cd entry-server
-          docker build -t asia-northeast1-docker.pkg.dev/minx-prod/entry-server/base:latest .
-          docker push asia-northeast1-docker.pkg.dev/minx-prod/entry-server/base:latest
+          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${APP_NAME}/base:latest .
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${APP_NAME}/base:latest
+        working-directory: ${{ env.APP_NAME }}
       - name: "Deploy to Cloud Run"
         run: |
-          gcloud run deploy entry-server \
-            --image asia-northeast1-docker.pkg.dev/minx-prod/entry-server/base:latest \
+          gcloud run deploy $APP_NAME \
+            --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${APP_NAME}/base:latest \
             --platform managed \
-            --region asia-northeast1 \
+            --region $REGION \
             --allow-unauthenticated
